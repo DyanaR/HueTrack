@@ -24,7 +24,7 @@ Runs only the client in development mode.
 ## Project Structure
 
 - client: Contains the front-end code (React).
-- server: Contains the back-end code (Node.js).
+- server: Contains the back-end code (____).
 - public: Contains static assets.
 - src: Contains the source code for the client.
 
