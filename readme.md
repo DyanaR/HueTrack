@@ -53,8 +53,10 @@ HueTrack is a habit-tracking web application that uses a color-coded calendar to
 
 Create a `.env` file in the `server` directory and include the following:
 
+```env
 PORT=5000
 DATABASE_URL=<your-database-url>
+```
 
 Replace `<your-database-url>` with the connection string for your database.
 
