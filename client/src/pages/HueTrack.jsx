@@ -12,8 +12,11 @@ import { IoIosArrowDown } from "react-icons/io";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext.js";
 import AddLabels from "../components/AddLabels.jsx";
+import axios from "axios";
 
 function HueTrack() {
+  const { user } = UserAuth();
+
   const {
     monthIndex,
     view,
@@ -23,12 +26,40 @@ function HueTrack() {
     setCurrentMonth,
     yearIndex,
     userObject,
-
+    setUserObject,
     // active,
     // setActive,
   } = useContext(GlobalContext);
 
   const [expandDropdown, setExpandDrowdown] = useState(false);
+
+  useEffect(() => {
+    if (user?.uid) {
+      console.log("Fetching user with UID:", user.uid);
+      fetchUser(user.uid);
+    }
+  }, [user]);
+
+  const fetchUser = (uid) => {
+    axios
+      .get(`http://localhost/huetrack/getUserData.php?uid=${uid}`)
+      .then((response) => {
+        console.log("API Response:", response.data);
+        if (response.data.status === 1 && response.data.data) {
+          setUserObject(response.data.data); // Update the user object directly
+        } else if (response.data.message) {
+          console.error(
+            "User not found or invalid response:",
+            response.data.message
+          );
+        } else {
+          console.error("Unexpected response structure:", response.data);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching user name:", error);
+      });
+  };
 
   const handleMouseEnter = () => {
     setExpandDrowdown(true);
@@ -80,7 +111,7 @@ function HueTrack() {
                 // onMouseLeave={handleMouseLeave}
               >
                 <h6 style={{ fontSize: "1.2rem" }}>
-                  Welcome, {userObject.username}
+                  Welcome, {userObject.fname || "User"}
                 </h6>
                 <IoIosArrowDown style={{ cursor: "pointer" }} />
               </div>

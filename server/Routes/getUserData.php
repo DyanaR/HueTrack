@@ -1,19 +1,26 @@
-// getUserData.php
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 include 'DbConnect.php';
-$objDb = new DbConnect;
-$conn = $objDb->connect();
 
-$uid = $_GET['uid'] ?? null;
+try {
+    $objDb = new DbConnect;
+    $conn = $objDb->connect();
 
-if ($uid) {
-    $sql = "SELECT username FROM users WHERE uid = :uid";
+    $uid = $_GET['uid'] ?? null;
+
+    if (!$uid) {
+        echo json_encode(['status' => 0, 'message' => 'UID is required']);
+        exit;
+    }
+
+    $sql = "SELECT fname, lname, username FROM users WHERE uid = :uid";
     $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':uid', $uid);
+    $stmt->bindParam(':uid', $uid, PDO::PARAM_STR);
     $stmt->execute();
+
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
@@ -21,6 +28,6 @@ if ($uid) {
     } else {
         echo json_encode(['status' => 0, 'message' => 'User not found']);
     }
-} else {
-    echo json_encode(['status' => 0, 'message' => 'UID is required']);
+} catch (PDOException $e) {
+    echo json_encode(['status' => 0, 'message' => 'Database error: ' . $e->getMessage()]);
 }
