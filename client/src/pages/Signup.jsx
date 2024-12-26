@@ -56,7 +56,9 @@ const Signup = () => {
       await createUser(
         userObject.email,
         userObject.password,
-        userObject.username
+        userObject.username,
+        userObject.fname,
+        userObject.lname
       );
       navigate("/HueTrack"); // redirect to the HueTrack page
     } catch (error) {
@@ -95,6 +97,24 @@ const Signup = () => {
           </p>
         </div>
         <form onSubmit={handleSubmit}>
+          <div className="fname">
+            <label>First Name</label>
+            <input
+              onChange={handleChange}
+              name="fname"
+              placeholder="First Name"
+              type="fname"
+            />
+          </div>
+          <div className="lname">
+            <label>Last Name</label>
+            <input
+              onChange={handleChange}
+              name="lname"
+              placeholder="Last Name"
+              type="lname"
+            />
+          </div>
           <div className="username">
             <label>Username</label>
             <input
@@ -171,7 +191,9 @@ const Container = styled.div`
   input:hover {
     border: 1.5px solid #1eacd6;
   }
-  .username {
+  .username,
+  .fname,
+  .lname {
     display: flex;
     flex-direction: column;
     padding-bottom: 1rem;

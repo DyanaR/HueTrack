@@ -17,15 +17,22 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const registerUserToDatabase = async (uid, email, username) => {
+  const registerUserToDatabase = async (uid, email, username, fname, lname) => {
     try {
-      // send the user data to your PHP API (index.php)
+      // send the user data to your PHP API
       const response = await axios.post(
         "http://localhost/huetrack/registerUser.php",
         {
           uid, // firebase User ID
           email,
           username,
+          fname,
+          lname,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
       );
 
@@ -67,7 +74,7 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
-  const createUser = async (email, password, username) => {
+  const createUser = async (email, password, username, fname, lname) => {
     try {
       const response = await createUserWithEmailAndPassword(
         auth,
@@ -77,7 +84,13 @@ export const AuthContextProvider = ({ children }) => {
       const firebaseUser = response.user;
 
       // store user data in your database
-      await registerUserToDatabase(firebaseUser.uid, email, username);
+      await registerUserToDatabase(
+        firebaseUser.uid,
+        email,
+        username,
+        fname,
+        lname
+      );
     } catch (error) {
       console.error("Error during user registration:", error);
       throw error; // propagate error to the Signup component
