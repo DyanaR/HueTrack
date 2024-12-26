@@ -1,0 +1,45 @@
+<?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, PUT, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+include 'DbConnect.php';
+$objDb = new DbConnect;
+$conn = $objDb->connect();
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    // handle inserting default labels when the user is created
+    $data = json_decode(file_get_contents('php://input'));
+
+
+    $habit_id = $data->habit_id; // get habit_id from the request
+    $labels = $data->labels;     // array of default labels with names and colors
+
+    foreach ($labels as $label) {
+        $label_id = $label->label_id; // UUID for each label
+        $label_name = $label->label_name;
+        $label_color = $label->label_color;
+
+        // insert label into the labels table
+        $sql = "INSERT INTO labels (label_id, habit_id, label_name, label_color, created_at) 
+                VALUES (:label_id, :habit_id, :label_name, :label_color, :created_at)";
+        $stmt = $conn->prepare($sql);
+
+        $created_at = date("Y-m-d");
+
+        $stmt->bindParam(':label_id', $label_id);
+        $stmt->bindParam(':habit_id', $habit_id);
+        $stmt->bindParam(':label_name', $label_name);
+        $stmt->bindParam(':label_color', $label_color);
+        $stmt->bindParam(':created_at', $created_at);
+
+        $stmt->execute();
+    }
+
+    echo json_encode(['status' => 1, 'message' => 'Labels added successfully.']);
+}

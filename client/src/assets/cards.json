@@ -1,0 +1,26 @@
+[
+    {
+        "id": 0,
+        "img": "",
+        "heading": "Choose Your Focus",
+        "paragraph": "Select a habit you want to cultivate throughout the year. Whether it's daily exercise, mindfulness, or any positive change, HueTrack is here to support your journey."
+    },
+    {
+        "id": 1,
+        "img": "",
+        "heading": "Customize with Labels",
+        "paragraph": "Personalize your habit tracking experience by creating labels that represent different aspects or states of your chosen habit. Attach vibrant colors to each label, making your progress tracking visually delightful."
+    },
+    {
+        "id": 2,
+        "img": "",
+        "heading": "Calendar View",
+        "paragraph": "Navigate through our intuitive calendar view where each day is a canvas for your progress. Simply tap on any day to mark your commitment, cycling through the colors associated with your chosen labels."
+    },
+    {
+        "id": 3,
+        "img": "",
+        "heading": "Statistics",
+        "paragraph": "Track your journey with insightful statistics and celebrate your milestones. Witness the evolution of your habits over time."
+    }
+]
