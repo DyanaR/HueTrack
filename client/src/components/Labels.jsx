@@ -288,10 +288,10 @@ const Container = styled.div`
     color: red;
     font-size: 0.9rem;
     margin-top: 0.2rem;
-    max-width: 100%; /* Prevent the error message from exceeding the parent container's width */
-    word-wrap: break-word; /* Ensure long words are broken to fit within the container */
-    overflow-wrap: break-word; /* Break lines if the word is too long for the container */
-    white-space: normal; /* Allow text to wrap */
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
   .buttons {
     display: flex;
