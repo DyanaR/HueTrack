@@ -111,7 +111,7 @@ function HueTrack() {
                 // onMouseLeave={handleMouseLeave}
               >
                 <h6 style={{ fontSize: "1.2rem" }}>
-                  Welcome, {userObject.fname || "User"}
+                  Welcome, {userObject.username || "User"}
                 </h6>
                 <IoIosArrowDown style={{ cursor: "pointer" }} />
               </div>

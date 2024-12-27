@@ -13,9 +13,37 @@ $conn = $objDb->connect();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === "OPTIONS") {
-    // Handle preflight requests
-    http_response_code(204); // No content
+    // handle preflight requests
+    http_response_code(204); // no content
     exit;
+}
+
+function validateUsername($username)
+{
+    // check if username is empty
+    if (empty($username)) {
+        return 'Username is required.';
+    }
+
+    // regex for username validation
+    $regex = '/^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{2,28}[a-zA-Z0-9]$/';
+
+    // validate against regex
+    if (!preg_match($regex, $username)) {
+        return 'Invalid username. It must:
+        - Start with a letter.
+        - Be 4-30 characters long.
+        - Contain only letters, digits, or a single underscore between characters.
+        - Not start or end with an underscore.
+        - No whitespace.';
+    }
+
+    // ensure the username length is within the limit
+    if (strlen($username) > 30) {
+        return 'Invalid username. It must be 30 characters or less.';
+    }
+
+    return null; // validation passed
 }
 
 switch ($method) {
@@ -25,28 +53,14 @@ switch ($method) {
 
         // validation and sanitization
         $uid = $user->uid ?? null;
-        $fname = $user->fname ?? null;
-        $lname = $user->lname ?? null;
         $username = $user->username ?? null;
         $email = $user->email ?? null;
 
-        // validate first name
-        if (empty($fname) || strlen($fname) > 30) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid fname. It must be between 1 and 30 characters.']);
-            exit;
-        }
-        $fname = htmlspecialchars(trim($fname)); // sanitize
-
-        // validate last name
-        if (empty($lname) || strlen($lname) > 30) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid lname. It must be between 1 and 30 characters.']);
-            exit;
-        }
-        $lname = htmlspecialchars(trim($lname)); // sanitize
-
         // validate username
-        if (empty($username) || strlen($username) > 50) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid username. It must be between 1 and 50 characters.']);
+        $usernameError = validateUsername($username);
+
+        if ($usernameError) {
+            echo json_encode(['status' => 0, 'message' => $usernameError]);
             exit;
         }
         $username = htmlspecialchars(trim($username)); // sanitize
@@ -60,15 +74,14 @@ switch ($method) {
 
 
         // prepare the SQL query to insert the new user
-        $sql = "INSERT INTO users (uid, fname, lname, email, username, created_at) VALUES (:uid, :fname, :lname, :email, :username, :created_at)";
+        $sql = "INSERT INTO users (uid, email, username, created_at) VALUES (:uid, :email, :username, :created_at)";
         $stmt = $conn->prepare($sql);
 
         // bind parameters
         $stmt->bindParam(':uid', $uid);
         $stmt->bindParam(':email', $email);
         $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':fname', $fname);
-        $stmt->bindParam(':lname', $lname);
+
         $created_at = date("Y-m-d"); // Use current date
         $stmt->bindParam(':created_at', $created_at);
 

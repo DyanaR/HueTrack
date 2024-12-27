@@ -18,8 +18,6 @@ export default function ContextWrapper(props) {
   const [title, setTitle] = useState("Alcohol Intake");
 
   const [userObject, setUserObject] = useState({
-    fname: "",
-    lname: "",
     username: "",
     email: "",
     password: "",

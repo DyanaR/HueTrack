@@ -16,7 +16,7 @@ try {
         exit;
     }
 
-    $sql = "SELECT fname, lname, username FROM users WHERE uid = :uid";
+    $sql = "SELECT username FROM users WHERE uid = :uid";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':uid', $uid, PDO::PARAM_STR);
     $stmt->execute();

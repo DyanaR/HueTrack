@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,6 +8,7 @@ import errorMessages from "../assets/firebaseErrorMessages.json";
 
 const Signup = () => {
   const { userObject, setUserObject } = useContext(GlobalContext);
+  const [usernameError, setUsernameError] = useState("");
   const navigate = useNavigate();
   const { createUser } = UserAuth();
 
@@ -19,9 +20,28 @@ const Signup = () => {
     }));
   };
 
+  const validateUsername = (username) => {
+    const regex = /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{2,28}[a-zA-Z0-9]$/;
+    if (!regex.test(username)) {
+      setUsernameError("Invalid username. Please follow the rules below:");
+    } else {
+      setUsernameError("");
+    }
+  };
+
+  const handleBlur = (e) => {
+    if (e.target.name === "username") {
+      validateUsername(userObject.username);
+    }
+  };
+
   // set up error or success notifications for user to see
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (usernameError) {
+      return;
+    }
 
     // check if the username already exists in the MySQL database
     const usernameCheckResponse = await fetch(
@@ -36,9 +56,8 @@ const Signup = () => {
     );
 
     if (!usernameCheckResponse.ok) {
-      NotificationManager.error(
-        "Error checking username availability. Please try again.",
-        "Error"
+      setUsernameError(
+        "Error checking username availability. Please try again."
       );
       return; // stop further processing
     }
@@ -47,7 +66,7 @@ const Signup = () => {
 
     if (usernameCheck.status === 0) {
       // if username already exists, show error notification
-      NotificationManager.error(usernameCheck.message, "Error");
+      setUsernameError(usernameCheck.message);
       return; // Stop the signup process
     }
 
@@ -56,9 +75,7 @@ const Signup = () => {
       await createUser(
         userObject.email,
         userObject.password,
-        userObject.username,
-        userObject.fname,
-        userObject.lname
+        userObject.username
       );
       navigate("/HueTrack"); // redirect to the HueTrack page
     } catch (error) {
@@ -66,7 +83,7 @@ const Signup = () => {
       const userFriendlyMessage =
         errorMessages[error.code] ||
         "An unexpected error occurred. Please try again.";
-      NotificationManager.error(userFriendlyMessage, "Failure");
+      setUsernameError(userFriendlyMessage);
     }
   };
 
@@ -97,32 +114,30 @@ const Signup = () => {
           </p>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="fname">
-            <label>First Name</label>
-            <input
-              onChange={handleChange}
-              name="fname"
-              placeholder="First Name"
-              type="fname"
-            />
-          </div>
-          <div className="lname">
-            <label>Last Name</label>
-            <input
-              onChange={handleChange}
-              name="lname"
-              placeholder="Last Name"
-              type="lname"
-            />
-          </div>
           <div className="username">
             <label>Username</label>
             <input
               onChange={handleChange}
+              onBlur={handleBlur}
               name="username"
               placeholder="Username"
-              type="username"
+              type="text"
             />
+            {usernameError && (
+              <div className="error-container">
+                <p className="error-text">{usernameError}</p>
+                <ul className="error-list">
+                  <li>Start with a letter</li>
+                  <li>Be 4-30 characters long</li>
+                  <li>
+                    Contain only letters, digits, or a single underscore between
+                    characters
+                  </li>
+                  <li>Not start or end with an underscore.</li>
+                  <li>No spaces</li>
+                </ul>
+              </div>
+            )}
           </div>
           <div className="email">
             <label>Email Address</label>
@@ -191,9 +206,7 @@ const Container = styled.div`
   input:hover {
     border: 1.5px solid #1eacd6;
   }
-  .username,
-  .fname,
-  .lname {
+  .username {
     display: flex;
     flex-direction: column;
     padding-bottom: 1rem;
@@ -207,6 +220,20 @@ const Container = styled.div`
     display: flex;
     flex-direction: column;
     padding-bottom: 1rem;
+  }
+  .error-container {
+    margin-top: 0.5rem;
+  }
+  .error-text {
+    color: red;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+  .error-list {
+    color: red;
+    font-size: 0.875rem;
+    list-style-type: disc;
+    padding-left: 1.5rem;
   }
   button {
     width: 100%;
