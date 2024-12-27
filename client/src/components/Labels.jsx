@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import GlobalContext from "../context/GlobalContext";
 import { TiDelete } from "react-icons/ti";
 import styled from "styled-components";
@@ -11,6 +11,39 @@ import axios from "axios";
 export default function Labels() {
   const { labelObject, setLabelObject, habitObject, setCalendarObject } =
     useContext(GlobalContext);
+
+  const [labelNameError, setLabelNameError] = useState("");
+
+  const validateLabelName = (labelName) => {
+    if (!labelName) {
+      return "Label name is required.";
+    }
+
+    const regex = /^(?! )[a-zA-Z0-9+_-]+(?: [a-zA-Z0-9+_-]+)*(?! )$/;
+
+    // check for consecutive special characters
+    if (/\+\+|--|__/.test(labelName)) {
+      return "Invalid input: No consecutive '+', '-', or '_' allowed.";
+    }
+
+    if (!regex.test(labelName)) {
+      return "Invalid input. Only letters, digits, single space, _, -, and +.";
+    }
+
+    if (labelName.length > 10) {
+      return "Must be 10 characters or fewer.";
+    }
+
+    return null; // valid
+  };
+
+  const validateLabelColor = (labelColor) => {
+    const regex = /^#[0-9A-Fa-f]{6}$/;
+    if (!regex.test(labelColor)) {
+      return "Invalid label color. Use HEX format (e.g., #FFFFFF).";
+    }
+    return null; // valid
+  };
 
   // fetch labels from backend based on the current habit_id
   useEffect(() => {
@@ -37,44 +70,59 @@ export default function Labels() {
     }
   }, [habitObject]);
 
+  // update the specific field (label_name or label_color) based on the input
   const handleLabelChange = (e, label, field) => {
     const { value } = e.target;
 
-    // update the specific field (label_name or label_color) based on the input
+    // temporarily allow all changes during typing
     const updatedLabels = labelObject.map((l) => {
       if (l.label_id === label.label_id) {
         return {
           ...l,
-          [field]: value, // Update either label_name or label_color
+          [field]: value,
         };
       }
       return l;
     });
-
     setLabelObject(updatedLabels);
 
-    // prepare the data to send to backend
-    const data = {
-      label_id: label.label_id,
-      habit_id: habitObject[0]?.habit_id, // reference to the current habit
-      [field]: value,
-    };
-
-    // send PUT request to update label in the database
-    axios
-      .put("http://localhost/huetrack/updateLabel.php", data)
-      .then((response) => {
-        if (response.data.status === 1) {
-          console.log("Label updated successfully.");
-        } else {
-          console.error("Failed to update label.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error updating label:", error);
-      });
+    // validate only after typing
+    if (field === "label_name") {
+      setLabelNameError(""); // clear error during typing
+    }
   };
 
+  const handleBlur = (e, label) => {
+    const error = validateLabelName(e.target.value);
+    if (error) {
+      setLabelNameError(error);
+    } else {
+      // send valid data to the backend
+      const data = {
+        label_id: label.label_id,
+        habit_id: habitObject[0]?.habit_id,
+        label_name: e.target.value,
+      };
+
+      axios
+        .put("http://localhost/huetrack/updateLabel.php", data)
+        .then((response) => {
+          if (response.data.status === 1) {
+            console.log("Label updated successfully.");
+          } else {
+            console.error("Failed to update label.");
+            NotificationManager.error("Failed to update label.", "Error");
+          }
+        })
+        .catch((error) => {
+          console.error("Error updating label:", error);
+          NotificationManager.error(
+            "An error occurred while updating label.",
+            "Error"
+          );
+        });
+    }
+  };
   const handleLabelAdd = () => {
     if (labelObject.length >= 6) {
       NotificationManager.error("Label limit has been reached.", "Failure");
@@ -172,6 +220,7 @@ export default function Labels() {
                   value={label.label_name}
                   required
                   onChange={(e) => handleLabelChange(e, label, "label_name")}
+                  onBlur={(e) => handleBlur(e, label)}
                 />
 
                 {labelObject.length !== 1 && (
@@ -187,6 +236,9 @@ export default function Labels() {
                 )}
               </div>
             ))}
+            {labelNameError && (
+              <div className="error-text">{labelNameError}</div>
+            )}
           </div>
           <footer>
             {/* <button type="submit" onClick={handleSubmit}>
@@ -213,6 +265,10 @@ const Container = styled.div`
     display: flex;
     padding: 0.2rem, 0.5rem;
     gap: 0.5rem;
+    max-width: 100%;
+  }
+  .habit-info {
+    max-width: 100%;
   }
   input {
     margin: 0.5rem 0;
@@ -227,6 +283,15 @@ const Container = styled.div`
   }
   input:hover {
     border: 1.5px solid #1eacd6;
+  }
+  .error-text {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+    max-width: 100%; /* Prevent the error message from exceeding the parent container's width */
+    word-wrap: break-word; /* Ensure long words are broken to fit within the container */
+    overflow-wrap: break-word; /* Break lines if the word is too long for the container */
+    white-space: normal; /* Allow text to wrap */
   }
   .buttons {
     display: flex;

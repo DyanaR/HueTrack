@@ -202,6 +202,8 @@ const Container = styled.div`
     top: 0px;
     bottom: 0px;
     ${"" /* height: 100%; */}
+    width: 18rem;
+    max-width: 100%;
   }
   .title {
     margin-bottom: 1rem;

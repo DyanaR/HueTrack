@@ -8,6 +8,30 @@ $objDb = new DbConnect;
 $conn = $objDb->connect();
 
 
+function validateLabelName($label_name)
+{
+    if (empty($label_name)) {
+        return "Label name required.";
+    }
+
+    $regex = '/^(?! )[a-zA-Z0-9+_-]+(?: [a-zA-Z0-9+_-]+)*(?! )$/';
+
+    // check for consecutive special characters
+    if (preg_match('/\+\+|--|__/', $label_name)) {
+        return 'Invalid input: No consecutive "+", "-", or "_" allowed.';
+    }
+
+    if (!preg_match($regex, $label_name)) {
+        return 'Invalid input. Allowed characters are alphanumeric, single spaces, "+", "-", and "_" (no consecutive special characters).';
+    }
+
+    if (strlen($label_name) > 10) {
+        return 'Invalid label name. It must be 10 characters or fewer.';
+    }
+
+    return null; // validation passed
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     $data = json_decode(file_get_contents('php://input'));
 
@@ -22,20 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         exit;
     }
 
-    // validate and sanitize label_name
-    if ($label_name !== null) {
-        // remove leading/trailing spaces and normalize spaces between words
-        $label_name = preg_replace('/\s+/', ' ', trim($label_name));
-
-        // check length constraint for label_name
-        if (strlen($label_name) > 50) {
-            echo json_encode(['status' => 0, 'message' => 'label_name exceeds 50 characters.']);
-            exit;
-        }
-
-        // ensure label_name is not empty after normalization
-        if (strlen($label_name) === 0) {
-            echo json_encode(['status' => 0, 'message' => 'label_name cannot be empty.']);
+    // validate label_name only if provided
+    if ($label_color !== null) {
+        $label_color = trim($label_color); // Remove unnecessary whitespace
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $label_color)) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid label color. Use HEX format (e.g., #FFFFFF).']);
             exit;
         }
     }
@@ -47,6 +62,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
             echo json_encode(['status' => 0, 'message' => 'Invalid label_color format.']);
             exit;
         }
+    }
+
+    // ensure at least one field to update
+    if ($label_name === null && $label_color === null) {
+        echo json_encode(['status' => 0, 'message' => 'No valid fields to update.']);
+        exit;
     }
 
     try {
@@ -92,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
 
             if (!$stmt2->execute()) {
                 $conn->rollBack();
-                echo json_encode(['status' => 0, 'message' => 'Failed to update calendar.']);
+                echo json_encode(['status' => 0, 'message' => 'Failed to update calendar.', 'error' => $stmt2->errorInfo()[2]]);
                 exit;
             }
         }
