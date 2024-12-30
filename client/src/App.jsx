@@ -8,6 +8,7 @@ import Account from "./pages/Account";
 import styled from "styled-components";
 import { AuthContextProvider } from "./context/AuthContext";
 import ProtectedRoutes from "./pages/ProtectedRoutes";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
             }
           />
           <Route path="/Login" element={<Login />} />
+          <Route path="/ResetPassword" element={<ResetPassword />} />
           <Route path="/Signup" element={<Signup />} />
         </Routes>
       </AuthContextProvider>

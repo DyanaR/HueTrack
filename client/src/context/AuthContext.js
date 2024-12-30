@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import axios from "axios";
@@ -93,6 +94,35 @@ export const AuthContextProvider = ({ children }) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
+  const checkUserExistence = async (email) => {
+    try {
+      const response = await axios.post(
+        "http://localhost/huetrack/checkUserExistence.php",
+        { email }
+      );
+
+      if (!response.data.exists) {
+        throw { code: "auth/user-not-found" }; // to mimic Firebase error code
+      }
+
+      return true; // user exists
+    } catch (error) {
+      console.error("Error checking user existence:", error);
+      throw error; // propagate error to the calling function
+    }
+  };
+
+  const resetPassword = async (email) => {
+    try {
+      await checkUserExistence(email);
+      await sendPasswordResetEmail(auth, email);
+      console.log("Password reset email sent!");
+    } catch (error) {
+      console.error("Error during password reset:", error);
+      throw error; // Propagate error to the UI
+    }
+  };
+
   const logout = () => {
     return signOut(auth);
   };
@@ -109,7 +139,9 @@ export const AuthContextProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ createUser, user, logout, signIn }}>
+    <UserContext.Provider
+      value={{ createUser, user, logout, signIn, resetPassword }}
+    >
       {!loading && children}
     </UserContext.Provider>
   );

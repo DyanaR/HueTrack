@@ -43,7 +43,7 @@ const Login = () => {
   return (
     <Container>
       <div className="nav">
-        <div className="left">
+        <div>
           <Link to="/" style={{ textDecoration: "none" }}>
             <h4>HueTrack</h4>
           </Link>
@@ -93,6 +93,9 @@ const Login = () => {
               </div>
             )}
           </div>
+          <p style={{ paddingBottom: ".5rem" }}>
+            <Link to="/ResetPassword">Forgot Password?</Link>
+          </p>
           <button>
             <h6>Login</h6>
           </button>
@@ -150,7 +153,6 @@ const Container = styled.div`
   .password {
     display: flex;
     flex-direction: column;
-    padding-bottom: 1rem;
   }
   .error-container {
     margin-top: 0.5rem;
