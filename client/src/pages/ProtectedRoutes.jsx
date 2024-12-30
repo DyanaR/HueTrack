@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
-import { UserAuth } from '../context/AuthContext';
+import React, { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { UserAuth } from "../context/AuthContext";
 
 const ProtectedRoutes = ({ children }) => {
-    const { user } = UserAuth();
-    const [authLoaded, setAuthLoaded] = useState(false);
+  const { user } = UserAuth();
+  const [authLoaded, setAuthLoaded] = useState(false);
 
-    useEffect(() => {
-        const authenticationCheck = async () => {
-          
-            setAuthLoaded(true); 
-        };
+  useEffect(() => {
+    const authenticationCheck = async () => {
+      setAuthLoaded(true);
+    };
 
-        authenticationCheck();
-    }, [user]);
+    authenticationCheck();
+  }, [user]);
 
-    if (!authLoaded) {
-        return <div>Loading...</div>;  
-    }
+  if (!authLoaded) {
+    return <div>Loading...</div>;
+  }
 
-    if (!user) {
-        return <Navigate to='/Login' />;
-    }
+  if (!user) {
+    return <Navigate to="/Signup" />;
+  }
 
-    return children;
+  return children;
 };
 
 export default ProtectedRoutes;

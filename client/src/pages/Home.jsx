@@ -22,7 +22,7 @@ const Home = () => {
           </div>
           <div className="right">
             <Link
-              to="/Login"
+              to={!user ? "/HueTrack" : "/Login"}
               style={{ textDecoration: "none", color: "black" }}
             >
               <h6>Login</h6>
@@ -274,14 +274,12 @@ const Container = styled.div`
       font-size: 1.5rem;
       max-width: 45rem;
     }
-   
   }
   @media screen and (max-width: 1190px) {
     .img-box {
       width: 12rem;
       height: 12rem;
     }
- 
   }
   @media screen and (max-width: 1170px) {
     h1 {
@@ -294,7 +292,7 @@ const Container = styled.div`
       font-size: 1.3rem;
       max-width: 40rem;
     }
-    
+
     .year-img {
       width: 43rem;
       height: 30rem;
@@ -304,12 +302,11 @@ const Container = styled.div`
     h1 {
       font-size: 3.5rem;
     }
- 
+
     .tagline {
       font-size: 1.2rem;
       max-width: 36rem;
     }
-
   }
   @media screen and (max-width: 1040px) {
     h1 {
@@ -326,17 +323,16 @@ const Container = styled.div`
       width: 12rem;
       height: 12rem;
     }
-    .info-grid{
+    .info-grid {
       grid-template-columns: repeat(2, 0fr);
-
     }
-    .info-box{
-      width:20rem;
+    .info-box {
+      width: 20rem;
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    .cards-txt{
+    .cards-txt {
       max-width: 20rem;
     }
     .tagline {
@@ -359,11 +355,10 @@ const Container = styled.div`
       width: 9rem;
       height: 3rem;
     }
-    .btn-txt{
+    .btn-txt {
       font-size: 1rem;
     }
   }
-
 `;
 
 export default Home;
