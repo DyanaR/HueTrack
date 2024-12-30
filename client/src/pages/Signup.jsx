@@ -4,13 +4,19 @@ import styled from "styled-components";
 import { Link, useNavigate } from "react-router-dom";
 import { UserAuth } from "../context/AuthContext";
 import { NotificationManager } from "react-notifications";
-import errorMessages from "../assets/firebaseErrorMessages.json";
+// import errorMessages from "../assets/firebaseErrorMessages.json";
+import { FirebaseError } from "firebase/app";
+import { handleEmailErrors } from "../context/EmailErrors";
+import { handlePasswordErrors } from "../context/PasswordErrors";
 
 const Signup = () => {
   const { userObject, setUserObject } = useContext(GlobalContext);
-  const [usernameError, setUsernameError] = useState("");
+  const [validUsernameError, setValidtUsernameError] = useState("");
   const navigate = useNavigate();
   const { createUser } = UserAuth();
+  const [errorUsernameMessage, setErrorUsernameMessage] = useState("");
+  const [errorEmailMessage, setErrorEmailMessage] = useState("");
+  const [errorPasswordMessage, setErrorPasswordMessage] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,9 +29,11 @@ const Signup = () => {
   const validateUsername = (username) => {
     const regex = /^[a-zA-Z](?!.*__)[a-zA-Z0-9_]{2,28}[a-zA-Z0-9]$/;
     if (!regex.test(username)) {
-      setUsernameError("Invalid username. Please follow the rules below:");
+      setValidtUsernameError(
+        "Invalid username. Please follow the rules below:"
+      );
     } else {
-      setUsernameError("");
+      setValidtUsernameError("");
     }
   };
 
@@ -39,7 +47,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (usernameError) {
+    if (validUsernameError) {
       return;
     }
 
@@ -56,8 +64,9 @@ const Signup = () => {
     );
 
     if (!usernameCheckResponse.ok) {
-      setUsernameError(
-        "Error checking username availability. Please try again."
+      NotificationManager.error(
+        "Error checking username availability. Please try again.",
+        "Error"
       );
       return; // stop further processing
     }
@@ -66,7 +75,8 @@ const Signup = () => {
 
     if (usernameCheck.status === 0) {
       // if username already exists, show error notification
-      setUsernameError(usernameCheck.message);
+      setErrorUsernameMessage(usernameCheck.message);
+      // NotificationManager.error(usernameCheck.message, "Error");
       return; // Stop the signup process
     }
 
@@ -80,10 +90,26 @@ const Signup = () => {
       navigate("/HueTrack"); // redirect to the HueTrack page
     } catch (error) {
       console.error("Signup error:", error);
-      const userFriendlyMessage =
-        errorMessages[error.code] ||
-        "An unexpected error occurred. Please try again.";
-      setUsernameError(userFriendlyMessage);
+
+      if (error instanceof FirebaseError) {
+        const emailErrorMessage = handleEmailErrors(error.code);
+        const passwordErrorMessage = handlePasswordErrors(error.code);
+        // for email error messages to display in ui
+        if (emailErrorMessage) {
+          setErrorEmailMessage(emailErrorMessage);
+          return;
+        }
+        // for password error messages
+        else if (passwordErrorMessage) {
+          setErrorPasswordMessage(passwordErrorMessage);
+          return;
+        }
+        //generateFirebaseAuthErrorMessage(error);
+      }
+      // const userFriendlyMessage =
+      //   errorMessages[error.code] ||
+      //   "An unexpected error occurred. Please try again.";
+      // NotificationManager.error(userFriendlyMessage, "Failure");
     }
   };
 
@@ -123,19 +149,23 @@ const Signup = () => {
               placeholder="Username"
               type="text"
             />
-            {usernameError && (
+            {(validUsernameError || errorUsernameMessage) && (
               <div className="error-container">
-                <p className="error-text">{usernameError}</p>
-                <ul className="error-list">
-                  <li>Start with a letter</li>
-                  <li>Be 4-30 characters long</li>
-                  <li>
-                    Contain only letters, digits, or a single underscore between
-                    characters
-                  </li>
-                  <li>Not start or end with an underscore.</li>
-                  <li>No spaces</li>
-                </ul>
+                <p className="error-text">
+                  {validUsernameError || errorUsernameMessage}
+                </p>
+                {validUsernameError && (
+                  <ul className="error-list">
+                    <li>Start with a letter</li>
+                    <li>Be 4-30 characters long</li>
+                    <li>
+                      Contain only letters, digits, or a single underscore
+                      between characters
+                    </li>
+                    <li>Not start or end with an underscore.</li>
+                    <li>No spaces</li>
+                  </ul>
+                )}
               </div>
             )}
           </div>
@@ -143,19 +173,31 @@ const Signup = () => {
             <label>Email Address</label>
             <input
               onChange={handleChange}
+              onFocus={() => setErrorEmailMessage("")}
               name="email"
               placeholder="Email"
               type="email"
             />
+            {errorEmailMessage && (
+              <div className="error-container">
+                <p className="error-text">{errorEmailMessage}</p>
+              </div>
+            )}
           </div>
           <div className="password">
             <label>Password</label>
             <input
               onChange={handleChange}
+              onFocus={() => setErrorPasswordMessage("")}
               name="password"
               placeholder="Password"
               type="password"
             />
+            {errorPasswordMessage && (
+              <div className="error-container">
+                <p className="error-text">{errorPasswordMessage}</p>
+              </div>
+            )}
           </div>
           <button>
             <h6>Create Account</h6>
