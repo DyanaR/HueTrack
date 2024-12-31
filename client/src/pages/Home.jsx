@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user } = UserAuth;
+  const { user } = UserAuth();
   const currentYear = dayjs().year();
   return (
     <Container>
@@ -22,7 +22,7 @@ const Home = () => {
           </div>
           <div className="right">
             <Link
-              to={!user ? "/HueTrack" : "/Login"}
+              to={!user ? "/Login" : "/HueTrack"}
               style={{ textDecoration: "none", color: "black" }}
             >
               <h6>Login</h6>
@@ -58,7 +58,7 @@ const Home = () => {
             </p>
           </div>
 
-          <Link to={!user ? "/HueTrack" : "/Signup"}>
+          <Link to={!user ? "/Signup" : "/HueTrack"}>
             <button>
               <h6 className="btn-txt">Try HueTrack</h6>
             </button>
@@ -85,7 +85,7 @@ const Home = () => {
               habit journey. View your final calendar—a colorful testament to
               your dedication and growth.
             </p>
-            <Link to={!user ? "/HueTrack" : "/Signup"}>
+            <Link to={!user ? "/Signup" : "/HueTrack"}>
               <button>
                 <h6 className="btn-txt">Try HueTrack</h6>
               </button>

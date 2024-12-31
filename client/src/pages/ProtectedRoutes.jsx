@@ -19,7 +19,7 @@ const ProtectedRoutes = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/Signup" />;
+    return <Navigate to="/" />;
   }
 
   return children;
