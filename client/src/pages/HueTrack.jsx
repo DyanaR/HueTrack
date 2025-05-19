@@ -27,6 +27,7 @@ function HueTrack() {
     yearIndex,
     userObject,
     setUserObject,
+    calendarObject,
     // active,
     // setActive,
   } = useContext(GlobalContext);
@@ -145,7 +146,10 @@ function HueTrack() {
                 {view ? (
                   <Month month={currentMonth} />
                 ) : (
-                  <Year monthCount={currentYear} />
+                  <Year
+                    monthCount={currentYear}
+                    calendarObject={calendarObject}
+                  />
                 )}
               </div>
             </div>

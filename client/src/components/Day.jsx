@@ -156,6 +156,10 @@ export default function Day({ day, rowIdx, displayedMonth }) {
         style={{
           backgroundColor: extractColorToDisplay(),
           cursor: isCurrentMonthDay ? "pointer" : "default",
+          borderColor: extractColorToDisplay()
+            ? extractColorToDisplay()
+            : "#E5E5E5",
+          borderWidth: extractColorToDisplay() ? "0px" : "1px",
         }}
         className={`day-container ${isCurrentMonthDay ? "" : "out-of-month"}`}
       >
@@ -174,8 +178,10 @@ const Container = styled.div`
     width: 5rem;
     height: 5rem;
     margin: 0.25rem;
+    transition: border-color 0.1s, background-color 0.1s;
     border-radius: 50%;
-    border: 1px solid lightgrey;
+    border-style: solid;
+    border-width: 1px;
     align-items: center;
     justify-content: center;
     user-select: none;

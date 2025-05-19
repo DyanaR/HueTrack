@@ -1,244 +1,229 @@
-import React, { Fragment } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-import Day from "./Day";
-import Stats from "./Stats";
 
-export default function Year({ monthCount }) {
+export default function Year({ monthCount, calendarObject }) {
   const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
+  const cellSize = 25; // Diameter of each day circle in pixels
+  const gridPadding = 40; // Vertical padding between months
+  const rowPadding = 45;
+  const circlePadding = 3; // Padding between circles
+
+  // State to track the number of columns
+
+  const svgRef = useRef(null); // Reference to the SVG element
+
+  // Function to dynamically determine columns based on screen width
+  const calculateColumns = () => {
+    if (window.innerWidth > 1200) return 4;
+    if (window.innerWidth > 800) return 3;
+    if (window.innerWidth > 600) return 2;
+    return 1;
+  };
+
+  const [numCols, setNumCols] = useState(calculateColumns());
+
+  // Recalculate number of columns on window resize
+  useEffect(() => {
+    const handleResize = () => setNumCols(calculateColumns());
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup listener on unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const numRows = Math.ceil(monthCount.length / numCols); // Adjust rows based on columns
+  const svgWidth = numCols * (cellSize * 7 + gridPadding); // Dynamically calculate SVG width
+  const svgHeight =
+    numRows * (cellSize * 6 + gridPadding + rowPadding) - rowPadding + 20; // Dynamically calculate SVG height
+
+  // Function to save SVG as an image
+  const saveAsImage = () => {
+    const svgElement = svgRef.current;
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+    const url = URL.createObjectURL(svgBlob);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = svgWidth;
+    canvas.height = svgHeight;
+
+    const context = canvas.getContext("2d");
+
+    // Draw white background
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    const img = new Image();
+    img.onload = () => {
+      context.drawImage(img, 0, 0); // Draw the SVG image on top of the white background
+      const link = document.createElement("a");
+      link.download = "calendar-year.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+  };
 
   return (
     <Container>
-      <div className="year">
-        {monthCount.map(({ monthNames, month }, index) => {
-          return (
-            <div key={index}>
-              <div className="month-title">{monthNames.format("MMMM")}</div>
-              <div className="weekday">
-                {daysOfWeek.map((day, idx) => (
-                  <p key={idx} className="weekdays-txt">
-                    {day}
-                  </p>
-                ))}
-              </div>
-              <div className="month">
-                {month.map((row, i) => (
-                  <Fragment key={i}>
-                    {row.map((day, idx) => (
-                      <Day day={day} key={idx} rowIdx={i} />
-                    ))}
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="stats-container">
-        <Stats />
+      <button onClick={saveAsImage} className="save-btn">
+        Save as Image
+      </button>
+      <div className="svg-wrapper">
+        <svg
+          ref={svgRef}
+          width={svgWidth}
+          height={svgHeight}
+          viewBox={`-30 -25 ${svgWidth + 20} ${svgHeight + 30}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {monthCount.map(({ monthNames, month }, monthIndex) => {
+            const row = Math.floor(monthIndex / numCols); // Determine the row of the calendar
+            const col = monthIndex % numCols; // Determine the column of the calendar
+            const xOffset = col * (cellSize * 7 + gridPadding); // X-offset for each month
+            const yOffset = row * (cellSize * 6 + gridPadding + rowPadding); // Y-offset for each month
+
+            return (
+              <g
+                key={monthIndex}
+                transform={`translate(${xOffset}, ${yOffset})`}
+              >
+                <text
+                  x={(cellSize * 7) / 2}
+                  y={10}
+                  textAnchor="middle"
+                  className="month-title"
+                >
+                  {monthNames.format("MMMM")}
+                </text>
+                <g>
+                  {daysOfWeek.map((day, idx) => (
+                    <text
+                      key={idx}
+                      x={idx * (cellSize + circlePadding)}
+                      y={30}
+                      className="weekday-label"
+                    >
+                      {day}
+                    </text>
+                  ))}
+                </g>
+                <g transform={`translate(-10, ${20})`}>
+                  {month.flat().map((day, idx) => {
+                    if (!day || day.month() !== monthNames.month()) {
+                      return null;
+                    }
+
+                    const dateValue = day.format("YYYY-MM-DD");
+                    const color = getDayColor(dateValue, calendarObject);
+                    const outlineColor = color === "#fff" ? "#E5E5E5" : "none";
+                    const xPos =
+                      (idx % 7) * (cellSize + circlePadding) + cellSize / 2;
+                    const yPos =
+                      Math.floor(idx / 7) * (cellSize + circlePadding) +
+                      cellSize / 2 +
+                      20;
+
+                    return (
+                      <g key={idx}>
+                        <circle
+                          cx={xPos}
+                          cy={yPos}
+                          r={cellSize / 2}
+                          fill={color}
+                          stroke={outlineColor}
+                        />
+                        <text
+                          x={xPos}
+                          y={yPos + 4}
+                          textAnchor="middle"
+                          fontSize="9px"
+                          fill="#000"
+                        >
+                          {day.format("D")}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </g>
+              </g>
+            );
+          })}
+        </svg>
       </div>
     </Container>
   );
 }
 
+function getDayColor(dateValue, calendarObject) {
+  const currentEntry = calendarObject.find(
+    (entry) => entry.day_date === dateValue
+  );
+  return currentEntry ? currentEntry.label_color : "#fff"; // Default color for no data
+}
+
 const Container = styled.div`
-  .year {
-    display: grid;
-    grid-template-columns: repeat(4, 0fr);
-    justify-content: center;
-    text-align: center;
-    padding-top: 1rem;
-    user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  button {
+    margin-top: 2rem;
+    font-size: 1rem;
+    transition: background-color 0.2s;
   }
-  .stats-container {
-    ${"" /* visibility: hidden; */}
-    display: none;
-  }
-  .month-title {
-    padding-bottom: 0.5rem;
-    text-align: left;
-    padding-left: 1rem;
-    font-weight: 600;
-  }
-  .month {
-    padding: 0.3rem 1rem 1rem 1rem;
-    display: grid;
-    grid-template-columns: repeat(7, 0fr);
-    justify-content: center;
-  }
-  .weekday {
-    ${"" /* margin-top: 0; */}
+
+  .svg-wrapper {
     display: flex;
-    gap: 1rem;
     justify-content: center;
     align-items: center;
+    padding-top: 0.5rem;
+    width: 70%;
   }
-  .date {
-    color: var(--color-gray);
-    font-size: 0.7rem;
+
+  svg {
+    background-color: white;
+    width: 90%;
+    height: auto;
   }
-  .day-container {
-    width: 1.3rem;
-    height: 1.3rem;
-    ${"" /* border: 0.05px solid #eeeeee; */}
-    border: none;
+  .month-title {
+    font-size: 1rem;
+    text-align: center;
+    font-weight: 600;
   }
-  .weekday {
-    height: 0.5rem;
+  .weekday-label {
+    font-size: 0.8rem;
+    fill: #555;
   }
-  .weekdays-txt {
-    color: var(--color-light);
-    font-size: 0.7rem;
-  }
-  @media screen and (max-width: 1400px) {
-    .date {
-      font-size: 12px;
-      ${"" /* font-weight: bold; */}
-    }
-  }
-  @media screen and (max-width: 1110px) {
-    .day-container {
-      width: 1rem;
-      height: 1rem;
-    }
-    .weekday {
-      gap: 0.6rem;
-    }
-    .date {
-      font-size: 10px;
-      ${"" /* padding: 0; */}
-    }
-  }
-  @media screen and (max-width: 1000px) {
-    ${
-      "" /* .year {
-      grid-template-columns: repeat(3, 0fr);
-    } */
-    }
-    .day-container {
-      width: 1rem;
-      height: 1rem;
-      ${"" /* border: none; */}
-    }
-    .weekday {
-      ${"" /* font-size: 7px; */}
-    }
-    .date {
-      ${"" /* font-size: 7px; */}
-      padding: 0;
-    }
-  }
-  @media screen and (max-width: 920px) {
-    .year {
-      grid-template-columns: repeat(3, 0fr);
-      column-gap: 2rem;
-    }
-    .day-container {
-      width: 0.9rem;
-      height: 0.9rem;
-    }
-    .weekday {
-      gap: 0.5rem;
-    }
+
+  @media screen and (max-width: 1200px) {
     .month-title {
-      font-size: 0.8rem;
+      font-size: 0.9rem;
     }
-    .month {
-      padding: 0.3rem 1rem 0.5rem 1rem;
-    }
-  }
-  @media screen and (max-width: 800px) {
-    .year {
-      grid-template-columns: repeat(4, 0fr);
-      column-gap: 0.1rem;
-    }
-    .stats-container {
-      ${"" /* display: normal; */}
-      display: flex;
-      text-align: center;
-      justify-content: center;
-      background-color: var(--color-bg);
-    }
-    .day-container {
-      width: 1.2rem;
-      height: 1.2rem;
-    }
-    .weekday {
-      gap: 0.85rem;
+    .weekday-label {
+      font-size: 0.7rem;
     }
   }
 
-  @media screen and (max-width: 740px) {
-    .year {
-      column-gap: 0.8rem;
+  @media screen and (max-width: 800px) {
+    .month-title {
+      font-size: 0.8rem;
     }
-    .day-container {
-      width: 1rem;
-      height: 1rem;
-    }
-    .weekday {
-      gap: 0.65rem;
-    }
-  }
-  @media screen and (max-width: 680px) {
-    .year {
-      column-gap: 0.02rem;
-    }
-    .day-container {
-      width: 0.9rem;
-      height: 0.9rem;
-    }
-    .weekday {
-      gap: 0.5rem;
+    .weekday-label {
+      font-size: 0.6rem;
     }
   }
 
   @media screen and (max-width: 600px) {
-    .year {
-      grid-template-columns: repeat(3, 0fr);
-      ${"" /* column-gap: .1rem; */}
+    .month-title {
+      font-size: 0.7rem;
     }
-    .day-container {
-      width: 1rem;
-      height: 1rem;
-    }
-    .weekday {
-      gap: 0.7rem;
-    }
-    .weekdays-txt {
-      font-size: 0.6rem;
-    }
-    ${
-      "" /* .month-title {
-      font-size: 10px;
-      padding-bottom: .4rem;
-    } */
-    }
-    .month {
-      padding-bottom: 0.5rem;
-    }
-  }
-  @media screen and (max-width: 480px) {
-    .year {
-      column-gap: 0.1rem;
-    }
-    .day-container {
-      width: 0.9rem;
-      height: 0.9rem;
-    }
-  }
-
-  @media screen and (max-width: 450px) {
-    .year {
-      column-gap: 0.02rem;
-    }
-    .weekday {
-      gap: 0.45rem;
-    }
-    .day-container {
-      width: 0.75rem;
-      height: 0.75rem;
-    }
-    .date {
+    .weekday-label {
       font-size: 0.5rem;
     }
   }
